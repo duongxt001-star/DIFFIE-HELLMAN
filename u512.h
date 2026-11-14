@@ -30,5 +30,8 @@ bool operator<(const uint512_t &a, const uint512_t &b);
 bool operator>(const uint512_t &a, const uint512_t &b);
 bool operator>=(const uint512_t &a, const uint512_t &b);
 bool operator<=(const uint512_t &a, const uint512_t &b);
-
+bool get_bit(const uint512_t &x, size_t i);
+void set_bit(uint512_t &x, size_t i, bool v);
+uint512_t operator<<(const uint512_t &a, size_t n);
+uint512_t operator>>(const uint512_t &a, size_t n);
 #endif
