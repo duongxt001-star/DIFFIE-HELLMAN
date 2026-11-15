@@ -14,11 +14,6 @@ int compare_u512(const uint512_t &a, const uint512_t &b)
     return 0;
 }
 
-bool get_bit(const uint512_t &x, int i)
-{
-    return (x.digits[i / 64] >> (i % 64)) & 1ULL;
-}
-
 uint512_t mod_u512(const uint512_t &x, const uint512_t &y)
 {
     uint512_t rem;
@@ -29,7 +24,7 @@ uint512_t mod_u512(const uint512_t &x, const uint512_t &y)
     for (int i = 511; i >= 0; i--)
     {
         bool overflow = (rem.digits[7] >> 63) & 1ULL;
-        uint64_t carry = get_bit(x, i);
+        uint64_t carry = get_bit(x, (size_t)i);
 
         for (int j = 0; j < 8; j++)
         {
@@ -55,8 +50,10 @@ uint512_t add_mod_u512(
     if (compare_u512(p, uint512_t()) == 0)
         return uint512_t();
 
-    uint512_t a = mod_u512(x, p);
-    uint512_t b = mod_u512(y, p);
+    // Rút gọn nếu đầu vào chưa nằm trong [0, p-1] theo đúng hợp đồng mã giả,
+    // đồng thời tránh gọi mod_u512 lãng phí khi x, y đã < p.
+    uint512_t a = (compare_u512(x, p) >= 0) ? mod_u512(x, p) : x;
+    uint512_t b = (compare_u512(y, p) >= 0) ? mod_u512(y, p) : y;
 
     uint512_t remaining = p - b;
 
@@ -79,11 +76,11 @@ uint512_t mult_mod_u512(
     if (compare_u512(p, uint512_t()) == 0)
         return ret;
 
-    current_base = mod_u512(x, p);
+    current_base = (compare_u512(x, p) >= 0) ? mod_u512(x, p) : x;
 
     for (int i = 0; i < 512; i++)
     {
-        if (get_bit(y, i))
+        if (get_bit(y, (size_t)i))
         {
             ret = add_mod_u512(ret, current_base, p);
         }
@@ -114,7 +111,7 @@ uint512_t exp_mod_u512(
 
     for (int i = 0; i < 512; i++)
     {
-        if (get_bit(exp, i))
+        if (get_bit(exp, (size_t)i))
         {
             result = mult_mod_u512(
                 result,
