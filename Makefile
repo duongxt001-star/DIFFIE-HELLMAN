@@ -2,7 +2,7 @@ ROOT ?= .
 
 CXX ?= g++
 CC ?= gcc
-CXXFLAGS ?= -std=c++20 -O3 -Wall -Wextra -Wpedantic
+CXXFLAGS ?= -std=c++14 -O3 -Wall -Wextra -Wpedantic -Wvla -Wredundant-decls
 CFLAGS ?= -O3 -Wall -Wextra -Wpedantic
 
 BIN := $(ROOT)/bin
