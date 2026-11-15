@@ -106,20 +106,35 @@ uint512_t rand_range_u512(prng_ctx *ctx, const uint512_t &min,
   if (min >= max)
     return min;
 
-  uint512_t one;
-  one.digits[0] = 1;
-  uint512_t range = (max - min) + one;
+  uint512_t diff = max - min;
+  bool is_full_range = true;
+  for (size_t i = 0; i < 8; i++) {
+    if (diff.digits[i] != 0xFFFFFFFFFFFFFFFFULL) {
+      is_full_range = false;
+      break;
+    }
+  }
 
   uint512_t r;
   for (size_t i = 0; i < 8; i++) {
     r.digits[i] = prng_next_u64(ctx);
   }
 
+  if (is_full_range)
+    return r;
+
+  uint512_t one;
+  one.digits[0] = 1;
+  uint512_t range = diff + one;
+
   uint512_t offset = mod_u512(r, range);
   return min + offset;
 }
 
 bool miller_rabin_test(prng_ctx *ctx, const uint512_t &n, size_t rounds) {
+  if (rounds == 0)
+    return false;
+
   uint512_t two;
   two.digits[0] = 2;
   uint512_t three;

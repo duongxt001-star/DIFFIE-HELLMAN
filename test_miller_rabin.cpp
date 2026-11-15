@@ -24,7 +24,27 @@ void test_rand_range(prng_ctx *ctx) {
   }
   uint512_t same = rand_range_u512(ctx, min, min);
   assert(same == min);
+
+  // Test full 512-bit range [0, UINT512_MAX]
+  uint512_t zero;
+  uint512_t umax;
+  for (size_t i = 0; i < 8; i++) umax.digits[i] = 0xFFFFFFFFFFFFFFFFULL;
+  bool non_zero = false;
+  for (int i = 0; i < 10; i++) {
+    uint512_t val = rand_range_u512(ctx, zero, umax);
+    for (size_t j = 0; j < 8; j++) {
+      if (val.digits[j] != 0) non_zero = true;
+    }
+  }
+  assert(non_zero);
+
   printf("[PASS] rand_range_u512 satisfies range constraints.\n\n");
+}
+
+void test_zero_rounds(prng_ctx *ctx) {
+  // A composite number like 9 with rounds = 0 should NOT be declared prime!
+  assert(!miller_rabin_test(ctx, u512_from_u64(9), 0));
+  printf("[PASS] miller_rabin_test correctly rejects rounds = 0\n\n");
 }
 
 void test_small_primes(prng_ctx *ctx) {
@@ -158,6 +178,7 @@ int main() {
   prng_seed(&ctx, seed, sizeof(seed));
 
   test_rand_range(&ctx);
+  test_zero_rounds(&ctx);
   test_small_primes(&ctx);
   test_small_composites(&ctx);
   test_carmichael_numbers(&ctx);
