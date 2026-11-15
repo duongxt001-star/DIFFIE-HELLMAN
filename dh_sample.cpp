@@ -118,3 +118,55 @@ uint512_t rand_range_u512(prng_ctx *ctx, const uint512_t &min,
   uint512_t offset = mod_u512(r, range);
   return min + offset;
 }
+
+bool miller_rabin_test(prng_ctx *ctx, const uint512_t &n, size_t rounds) {
+  uint512_t two;
+  two.digits[0] = 2;
+  uint512_t three;
+  three.digits[0] = 3;
+
+  if (n < two)
+    return false;
+  if (n == two || n == three)
+    return true;
+  if (!get_bit(n, 0))
+    return false;
+
+  uint512_t one;
+  one.digits[0] = 1;
+  uint512_t n_minus_1 = n - one;
+  uint512_t d = n_minus_1;
+  size_t s = 0;
+
+  while (!get_bit(d, 0)) {
+    d = d >> 1;
+    s++;
+  }
+
+  uint512_t n_minus_2 = n - two;
+
+  for (size_t i = 0; i < rounds; i++) {
+    uint512_t a = rand_range_u512(ctx, two, n_minus_2);
+    uint512_t x = exp_mod_u512(a, d, n);
+
+    if (x == one || x == n_minus_1)
+      continue;
+
+    bool composite = true;
+    for (size_t r = 1; r < s; r++) {
+      x = mult_mod_u512(x, x, n);
+      if (x == n_minus_1) {
+        composite = false;
+        break;
+      }
+      if (x == one) {
+        return false;
+      }
+    }
+
+    if (composite)
+      return false;
+  }
+
+  return true;
+}

@@ -24,6 +24,18 @@ void test_rand_range(prng_ctx *ctx) {
   printf("[PASS] test_rand_range\n");
 }
 
+void test_basic_miller_rabin(prng_ctx *ctx) {
+  assert(!miller_rabin_test(ctx, u512_from_u64(0)));
+  assert(!miller_rabin_test(ctx, u512_from_u64(1)));
+  assert(miller_rabin_test(ctx, u512_from_u64(2)));
+  assert(miller_rabin_test(ctx, u512_from_u64(3)));
+  assert(!miller_rabin_test(ctx, u512_from_u64(4)));
+  assert(miller_rabin_test(ctx, u512_from_u64(5)));
+  assert(!miller_rabin_test(ctx, u512_from_u64(6)));
+  assert(miller_rabin_test(ctx, u512_from_u64(7)));
+  printf("[PASS] test_basic_miller_rabin\n");
+}
+
 int main() {
   prng_ctx ctx;
   uint8_t seed[32];
@@ -31,5 +43,6 @@ int main() {
   prng_seed(&ctx, seed, sizeof(seed));
 
   test_rand_range(&ctx);
+  test_basic_miller_rabin(&ctx);
   return 0;
 }
