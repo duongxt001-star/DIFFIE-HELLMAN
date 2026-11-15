@@ -127,3 +127,28 @@ Thực hiện đo đạc trên số nguyên tố 512-bit ($2^{512} - 569$) với
 Với tốc độ trung bình **~450 ms cho một số nguyên tố 512-bit**, và **dưới 10 ms cho một hợp số** (vì hợp số thường bị phát hiện ngay ở cơ số đầu tiên $a$ mà không cần chạy đủ $k$ vòng), thuật toán Miller-Rabin đã hoàn toàn sẵn sàng để tích hợp vào Phần 4. 
 
 Để tối ưu hóa hơn nữa cho Phần 4, ta sẽ kết hợp thêm kỹ thuật **sàng số nguyên tố nhỏ (trial division với 100 số nguyên tố đầu tiên)** trước khi gọi Miller-Rabin, giúp loại bỏ $>85\%$ ứng viên hợp số chỉ trong vài micro-giây.
+
+---
+
+## 6. Các lưu ý kỹ thuật chuyên sâu và Bài học kinh nghiệm (Key Technical Notes)
+
+Phần này đặc biệt giá trị cho việc bảo vệ đồ án và phần tự đánh giá (Mục 2.5.6 trong đề bài):
+
+### 6.1. Xử lý an toàn hiện tượng tràn số dải cực đại (Max-Range Overflow)
+- **Vấn đề phát hiện**: Trong hàm sinh số ngẫu nhiên `rand_range_u512(ctx, min, max)`, công thức toán học tính độ dài khoảng là:
+  $$\text{range} = (max - min) + 1$$
+  Nếu một module khác yêu cầu sinh số trên toàn bộ không gian số lớn 512-bit ($min = 0$ và $max = 2^{512} - 1$), thì hiệu $max - min = 2^{512} - 1$ (toàn bộ 8 limb đều là `0xFFFFFFFFFFFFFFFFULL`). Khi cộng thêm 1, giá trị bị tràn số 512-bit và quay vòng (`wrap-around`) về `0`. Phép chia dư `mod_u512(r, 0)` khi đó sẽ trả về `0`, làm hàm luôn trả về đúng `min` và vô hiệu hóa tính ngẫu nhiên của hệ thống.
+- **Giải pháp xử lý**: Bổ sung kiểm tra cờ `is_full_range` trước khi cộng 1. Nếu khoảng cách đúng bằng $2^{512} - 1$, hàm trả về trực tiếp số ngẫu nhiên 512-bit $R$ thu được từ CSPRNG mà không thực hiện phép tính dư.
+
+### 6.2. Lập trình phòng thủ (Defensive Programming) với `rounds == 0`
+- Trong các thuật toán xác suất, nếu người gọi vô tình truyền `rounds = 0`, việc bỏ qua vòng lặp kiểm tra và trả về `true` sẽ khiến mọi hợp số lẻ $\ge 5$ đều bị kết luận sai là số nguyên tố.
+- Cài đặt đã bổ sung điều kiện bảo vệ `if (rounds == 0) return false;` ở ngay đầu hàm để ngăn chặn hoàn toàn rủi ro này.
+
+### 6.3. Hiện tượng Modulo Bias và Khuyến nghị cho Phần 5 (Sinh Khóa Riêng)
+- Khi tính $R \pmod{\text{range}}$ với $R \in [0, 2^{512}-1]$, nếu $\text{range}$ không phải là ước số của $2^{512}$, các số dư nhỏ hơn $2^{512} \pmod{\text{range}}$ sẽ có xác suất xuất hiện cao hơn một lượng cực nhỏ $\approx \frac{1}{2^{512}}$.
+- **Đánh giá**: Đối với Miller-Rabin, sai lệch này là không đáng kể ($< 2^{-512}$) và không ảnh hưởng đến độ tin cậy. Tuy nhiên, đối với Phần 5 (sinh Khóa riêng $x \in [2, p-2]$ cho Alice và Bob), tiêu chuẩn an ninh mật mã NIST FIPS 186-4 khuyến nghị sử dụng kỹ thuật **Lấy mẫu loại trừ (Rejection Sampling)** để đảm bảo tính ngẫu nhiên đều tuyệt đối, triệt tiêu mọi khả năng tấn công phân tích thống kê.
+
+### 6.4. Tối ưu hóa chu kỳ lặp lũy thừa mô-đun
+- Hiện tại, hàm `exp_mod_u512` luôn lặp đủ 512 bit từ vị trí 0 đến 511.
+- Đối với các số nhỏ hoặc số mũ $d$ có ít bit (ví dụ các số Carmichael nhỏ), việc tìm vị trí bit 1 cao nhất (MSB) của số mũ để kết thúc vòng lặp sớm sẽ tiết kiệm đáng kể thời gian tính toán.
+
