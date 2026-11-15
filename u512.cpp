@@ -2,33 +2,36 @@
 uint512_t operator+(const uint512_t &a, const uint512_t &b)
 {
     uint512_t result;
-    unsigned __int128 carry = 0;
+    uint64_t carry = 0;
 
-    for(size_t i = 0; i < 8; i++)
+    for (size_t i = 0; i < 8; i++)
     {
-        unsigned __int128 sum =(unsigned __int128)a.digits[i] + b.digits[i] + carry;
+        uint64_t s = a.digits[i] + b.digits[i];
+        uint64_t c1 = (s < a.digits[i]) ? 1 : 0;   // tràn khi cộng a + b
+        uint64_t s2 = s + carry;
+        uint64_t c2 = (s2 < s) ? 1 : 0;            // tràn khi cộng carry
 
-        result.digits[i] = (uint64_t)sum;
-        carry = sum >> 64;
+        result.digits[i] = s2;
+        carry = c1 | c2;
     }
-
     return result;
 }
+
 uint512_t operator-(const uint512_t &a, const uint512_t &b)
 {
-    //a - b
     uint512_t result;
     uint64_t borrow = 0;
 
-    for(size_t i = 0; i < 8; i++)
+    for (size_t i = 0; i < 8; i++)
     {
-        unsigned __int128 sub = (unsigned __int128)b.digits[i] + borrow;
+        uint64_t d = a.digits[i] - b.digits[i];
+        uint64_t b1 = (a.digits[i] < b.digits[i]) ? 1 : 0;
+        uint64_t d2 = d - borrow;
+        uint64_t b2 = (d < borrow) ? 1 : 0;
 
-        result.digits[i] = (uint64_t)((unsigned __int128)a.digits[i] - sub);
-
-        borrow = ((unsigned __int128)a.digits[i] < sub) ? 1 : 0;
+        result.digits[i] = d2;
+        borrow = b1 | b2;
     }
-
     return result;
 }
 bool operator==(const uint512_t &a, const uint512_t &b)

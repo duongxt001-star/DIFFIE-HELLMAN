@@ -1,4 +1,4 @@
-// main_dh.cpp - Trao đổi khóa Diffie-Hellman (Lab01)
+// main_prng.cpp - Trao đổi khóa Diffie-Hellman (Lab01)
 //
 // Cách dùng:
 //   ./dh                 -> p 512 bit, seed ngẫu nhiên từ hệ điều hành
@@ -6,9 +6,9 @@
 //   ./dh 512 --fixed     -> dùng seed cố định để kết quả lặp lại được (debug)
 //
 // File này phụ thuộc vào:
-//   - u512_sample.h  : kiểu uint512_t + các toán tử (cần có file .cpp cài đặt)
-//   - dh_sample.h    : modular_exponentiation, generate_safe_prime, generate_private_key
-//   - prng.h         : PRNG dùng SHAKE128
+//   - u512.h  : kiểu uint512_t + các toán tử (cần có file .cpp cài đặt)
+//   - dh.h    : modular_exponentiation, generate_safe_prime, generate_private_key
+//   - prng.h  : PRNG dùng SHAKE128
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -18,11 +18,8 @@
 
 #include "prng.h"
 #include "u512.h"
-#include "dh_sample.h"
+#include "dh.h"
 
-// ---------------------------------------------------------------------------
-// Hàm tiện ích (không thuộc phần bạn phải làm ở bước 3, 4, 5)
-// ---------------------------------------------------------------------------
 
 // In số lớn dạng hex (digits[0] là chunk thấp nhất, digits[7] là chunk cao nhất).
 static void print_u512(const char *label, const uint512_t &x)
@@ -60,12 +57,12 @@ static void init_prng(prng_ctx *ctx, bool fixed_seed)
     prng_seed(ctx, seed, sizeof(seed));
 }
 
-// ---------------------------------------------------------------------------
+
 // main: logic trao đổi khóa Diffie-Hellman
-// ---------------------------------------------------------------------------
+
 int main(int argc, char **argv)
 {
-    size_t bit_size = 512; // tối thiểu 512 bit theo đề
+    size_t bit_size = 512; // tối da 512 bit
     bool fixed_seed = false;
 
     for (int i = 1; i < argc; i++)
@@ -77,13 +74,13 @@ int main(int argc, char **argv)
         else
         {
             long v = atol(argv[i]);
-            if (v >= 512)
+            if (v <= 512)
             {
                 bit_size = (size_t)v;
             }
             else
             {
-                fprintf(stderr, "Kich thuoc bit khong hop le (toi thieu 512): %s\n", argv[i]);
+                fprintf(stderr, "Kich thuoc bit khong hop le (toi da 512): %s\n", argv[i]);
                 return 1;
             }
         }

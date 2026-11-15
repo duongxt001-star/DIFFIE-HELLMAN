@@ -2,13 +2,13 @@ ROOT ?= .
 
 CXX ?= g++
 CC ?= gcc
-CXXFLAGS ?= -std=c++14 -O3 -Wall -Wextra -Wpedantic
+CXXFLAGS ?= -std=c++20 -O3 -Wall -Wextra -Wpedantic
 CFLAGS ?= -O3 -Wall -Wextra -Wpedantic
 
 BIN := $(ROOT)/bin
 BUILD := $(BIN)/build
 
-PRNG_OBJECTS := $(BUILD)/main_prng.o $(BUILD)/prng.o $(BUILD)/fips202.o $(BUILD)/u512.o
+PRNG_OBJECTS := $(BUILD)/main_prng.o $(BUILD)/prng.o $(BUILD)/fips202.o $(BUILD)/u512.o $(BUILD)/dh.o
 
 .PHONY: all folders run-prng clean
 
@@ -24,6 +24,8 @@ $(BUILD)/prng.o: $(ROOT)/prng.cpp $(ROOT)/prng.h $(ROOT)/fips202.h | folders
 	$(CXX) $(CXXFLAGS) -I$(ROOT) -c $< -o $@
 
 $(BUILD)/u512.o: $(ROOT)/u512.cpp $(ROOT)/u512.h | folders
+	$(CXX) $(CXXFLAGS) -I$(ROOT) -c $< -o $@
+$(BUILD)/dh.o: $(ROOT)/dh.cpp $(ROOT)/dh.h $(ROOT)/prng.h $(ROOT)/u512.h | folders
 	$(CXX) $(CXXFLAGS) -I$(ROOT) -c $< -o $@
 
 $(BUILD)/fips202.o: $(ROOT)/fips202.c $(ROOT)/fips202.h | folders
