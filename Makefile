@@ -37,3 +37,20 @@ run-prng: $(BIN)/prng
 
 clean:
 	rm -rf $(BIN)
+
+
+# Build and run Safe Prime generation tests (64-bit and 128-bit by default).
+SAFE_PRIME_TEST_OBJECTS := $(BUILD)/test_safe_prime.o $(BUILD)/dh_sample.o $(BUILD)/prng.o $(BUILD)/fips202.o $(BUILD)/u512.o
+
+$(BUILD)/test_safe_prime.o: $(ROOT)/test_safe_prime.cpp $(ROOT)/dh_sample.h $(ROOT)/prng.h $(ROOT)/u512.h | folders
+	$(CXX) $(CXXFLAGS) -I$(ROOT) -c $< -o $@
+
+$(BUILD)/dh_sample.o: $(ROOT)/dh_sample.cpp $(ROOT)/dh_sample.h $(ROOT)/prng.h $(ROOT)/u512.h | folders
+	$(CXX) $(CXXFLAGS) -I$(ROOT) -c $< -o $@
+
+$(BIN)/test_safe_prime: $(SAFE_PRIME_TEST_OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+.PHONY: test-safe-prime
+test-safe-prime: $(BIN)/test_safe_prime
+	./$(BIN)/test_safe_prime

@@ -185,3 +185,69 @@ bool miller_rabin_test(prng_ctx *ctx, const uint512_t &n, size_t rounds) {
 
   return true;
 }
+
+
+static bool passes_small_prime_filter(const uint512_t &n) {
+  static const uint32_t small_primes[] = {
+      3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
+      53, 59, 61, 67, 71, 73, 79, 83, 89, 97
+  };
+
+  for (uint32_t prime : small_primes) {
+    uint64_t remainder = 0;
+    for (int i = 7; i >= 0; --i) {
+      unsigned __int128 value =
+          (static_cast<unsigned __int128>(remainder) << 64) | n.digits[i];
+      remainder = static_cast<uint64_t>(value % prime);
+    }
+    if (remainder == 0) {
+      bool equal_to_prime = (n.digits[0] == prime);
+      for (size_t i = 1; i < 8; ++i)
+        equal_to_prime = equal_to_prime && (n.digits[i] == 0);
+      if (!equal_to_prime)
+        return false;
+    }
+  }
+  return true;
+}
+
+static uint512_t random_odd_with_bits(prng_ctx *ctx, size_t bits) {
+  uint512_t candidate;
+  const size_t words = (bits + 63) / 64;
+  for (size_t i = 0; i < words; ++i)
+    candidate.digits[i] = prng_next_u64(ctx);
+
+  const size_t used_bits = bits % 64;
+  if (used_bits != 0)
+    candidate.digits[words - 1] &= ((1ULL << used_bits) - 1ULL);
+
+  set_bit(candidate, bits - 1, true);
+  set_bit(candidate, 0, true);
+  return candidate;
+}
+
+uint512_t generate_safe_prime(prng_ctx *ctx, size_t bitsize) {
+  if (ctx == nullptr || bitsize < 4 || bitsize > 512)
+    return uint512_t();
+
+  const size_t q_bits = bitsize - 1;
+  uint512_t one;
+  one.digits[0] = 1;
+
+  while (true) {
+    uint512_t q = random_odd_with_bits(ctx, q_bits);
+
+    if (!passes_small_prime_filter(q))
+      continue;
+    if (!miller_rabin_test(ctx, q, 20))
+      continue;
+
+    uint512_t p = (q << 1) + one;
+    if (!passes_small_prime_filter(p))
+      continue;
+    if (!miller_rabin_test(ctx, p, 20))
+      continue;
+
+    return p;
+  }
+}
