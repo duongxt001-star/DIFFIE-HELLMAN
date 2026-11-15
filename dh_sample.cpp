@@ -100,3 +100,21 @@ uint512_t modular_exponentiation(const uint512_t &base, const uint512_t &exp,
                                  const uint512_t &mod) {
   return exp_mod_u512(base, exp, mod);
 }
+
+uint512_t rand_range_u512(prng_ctx *ctx, const uint512_t &min,
+                          const uint512_t &max) {
+  if (min >= max)
+    return min;
+
+  uint512_t one;
+  one.digits[0] = 1;
+  uint512_t range = (max - min) + one;
+
+  uint512_t r;
+  for (size_t i = 0; i < 8; i++) {
+    r.digits[i] = prng_next_u64(ctx);
+  }
+
+  uint512_t offset = mod_u512(r, range);
+  return min + offset;
+}

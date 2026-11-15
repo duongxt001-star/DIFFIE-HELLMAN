@@ -16,6 +16,8 @@ uint512_t exp_mod_u512(const uint512_t &base, const uint512_t &exp,
 
 uint512_t modular_exponentiation(const uint512_t &base, const uint512_t &exp,
                                  const uint512_t &mod);
+uint512_t rand_range_u512(prng_ctx *ctx, const uint512_t &min,
+                          const uint512_t &max);
 uint512_t generate_safe_prime(prng_ctx *ctx, size_t bitsize = 512);
 uint512_t generate_private_key(prng_ctx *ctx, const uint512_t &p);
 
