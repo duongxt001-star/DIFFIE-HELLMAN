@@ -8,11 +8,21 @@ make run-prng
 ```
 
 ```
-./bin/prng <số bit nguyên tố> <kiểu random>
+./bin/prng <số bit nguyên tố> <kiểu random seed>
 ```
+Có 2 kiểu random seed: ngẫu nhiên và cố định
+
 vd:muốn tạo số nguyên tố seed cố định với 512 bit nguyên tố
-```./bin/prng 512 --fixed```
+
+```
+./bin/prng 512 --fixed
+
+```
 
 vd:muốn tạo số nguyên tố seed ngẫu nhiên với 512 bit nguyên tố
-```./bin/prng 512```
+
+```
+./bin/prng 512
+
+```
 Dùng các hàm trong thư viện để tự xây dựng số lớn, 512 bit, 1024 bit, etc. (uint512_t, uint1024_t uint2048_t).

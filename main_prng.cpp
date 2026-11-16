@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "prng.h"
 #include "u512.h"
@@ -73,16 +74,28 @@ int main(int argc, char **argv)
         }
         else
         {
-            long v = atol(argv[i]);
-            if (v <= 512)
+            const char *arg = argv[i];
+            bool is_decimal = arg[0] != '\0';
+            for (const char *ch = arg; *ch != '\0'; ++ch)
             {
-                bit_size = (size_t)v;
+                if (*ch < '0' || *ch > '9')
+                {
+                    is_decimal = false;
+                    break;
+                }
             }
-            else
+
+            char *end = nullptr;
+            errno = 0;
+            long v = strtol(arg, &end, 10);
+            if (!is_decimal || errno == ERANGE || end == arg || *end != '\0' ||
+                v < 4 || v > 512)
             {
-                fprintf(stderr, "Kich thuoc bit khong hop le (toi da 512): %s\n", argv[i]);
+                fprintf(stderr, "Kich thuoc bit phai la so nguyen tu 4 den 512: %s\n", arg);
                 return 1;
             }
+
+            bit_size = (size_t)v;
         }
     }
 
